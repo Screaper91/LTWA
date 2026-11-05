@@ -7,24 +7,11 @@ from typing import *
 from numpy import concatenate, ndarray, unique, empty, int32, ndindex, squeeze, array
 #from cubiomes import Generator as BiomeGenerator
 
-from Long_Term_World_Analysis import WorldExplorer, create_rectangles, merged_deque, default_path
+from Long_Term_World_Analysis import WorldExplorer, create_rectangles, merged_deque
 from Zoom import Zoom_Advanced as Zoomed
 from Zoom import MultiImageZoom
 from viewer_info import CoordinateFormatter, CursorPositionInfo, BiomeInfo
 from biomes import Biome, cubiomes_palette
-
-def bedrock_path(installation: str, world: str) -> str:
-	return  r"C:\Users\JAD\AppData\Roaming\.minecraft_bedrock\installations\Screaper91" + '\\' + installation + r"\packageData\minecraftWorlds" + '\\' + world
-
-def pe_backup_path(folder: str) -> str:
-	return r"C:\Users\JAD\Documents\Minecraft\PE World Backups" + '\\' + folder
-
-other_path = bedrock_path('Caves and Cliffs II', 'ad8ZY9TJAAA=')
-default_path = r"C:\Users\JAD\Documents\Minecraft\PE World Backups\n3uTXxSgA (6)"
-forced_generate_surroundings = bedrock_path('Latest Release', 'n3uTXxSgA (6)')
-nether_update_reference = bedrock_path('Nether Update', '3fxfZOaDAAA=')
-desert_regenerated =bedrock_path('Trails and Tales 1.20', 'N6FnZCHCAAA=')
-latest_backup = r'C:\Users\JAD\Documents\Minecraft\PE World Backups\ekJyZHzeBAA=\ekJyZHzeBAA='
 
 Range = Tuple[int, int, int, int, int]
 
@@ -53,7 +40,7 @@ def get_palette(biome_palette, transparent_index = None, default_alpha = 255, *e
 	else:
 		return palette, "RGB"
 
-def view_generated_biomes(root: Tk, path=default_path, include_underground=False):
+def view_generated_biomes(root: Tk, path: str, include_underground=False):
 		root.title("Biome Viewer")
 
 		world = WorldExplorer(path)
@@ -179,7 +166,7 @@ class ImageCycler:
 		self._images = images
 		self._index = 0
 		self._rect_id = zoom.add_scaleable_image(images[0], coords)
-		zoom.canvas.bind("<ButtonPress-3>", self.change_image)
+		zoom.canvas.bind("l", self.change_image)
 		#zoom.canvas.itemconfigure(zoom.container, state='hidden') # this hides the rectangle, find a way to hide the image instead
 
 	def change_image(self, *event):
@@ -255,10 +242,10 @@ class SequencePopper:
 		return self._prev_len > 0
 
 
-def view_generated_world(root: Tk, path: str = default_path, dimension: str = "minecraft:overworld"):
-	root.title("Chunks generated")
+def view_generated_world(root: Tk, path: str, dimension: str = "minecraft:overworld"):
 
 	world = WorldExplorer(path)
+	root.title("{} - Cave Biome Fixer".format(world.get_world_name()))
 
 	rectangles, bounds = world.get_chunk_boxes(dimension)
 	min_x, min_z = bounds[0], bounds[1]
@@ -355,14 +342,14 @@ class RectangleAnnotations:
 
 	def _begin_add(self):
 		self._state = 0
-		self._func_ids['<Button-2>'] = self._frame.canvas.bind('<Button-2>', self._click)
+		self._func_ids['<Button-3>'] = self._frame.canvas.bind('<Button-3>', self._click)
 
 	def _click(self, event):
 		if self._state:
 			# Choosing ending corner
 			self._unbind_func('<Motion>')
 			self._unbind_func('<Enter>')
-			self._unbind_func('<Button-2>')
+			self._unbind_func('<Button-3>')
 			x0, y0, *_ = self._frame.canvas.coords(self._new_rect)
 			self._frame.canvas.delete(self._new_rect); self._new_rect = None
 			x1, y1 = self._canvas_transform(event)
@@ -416,7 +403,7 @@ def scale(data, scalar: int):
 	if isinstance(data, tuple):
 		return tuple(scalar * i for i in data)
 
-def view_generated_world_x16(root: Tk, path: str = default_path, dimension: str = "minecraft:overworld"):
+def view_generated_world_x16(root: Tk, path: str, dimension: str = "minecraft:overworld"):
 	root.title("Chunks generated")
 
 	world = WorldExplorer(path)
@@ -489,6 +476,7 @@ if spawn_range != create_chunk_range(0, -1, 2, -1, -64):
 #check_range(spawn_range, 64, 1)
 
 
+
 if __name__ == "__main__":
 
 	root = Tk()
@@ -499,13 +487,14 @@ if __name__ == "__main__":
 
 	menubar = Menu(win)
 	menu_file = Menu(menubar)
-	menu_edit = Menu(menubar)
+	#menu_edit = Menu(menubar)
 
 	def choose_world_folder():
 		dirname = filedialog.askdirectory(mustexist=True, title='Open world folder')
 		print(dirname)
 		cursorPosInfo, spawn_marker, create_cave_fixer_callback = view_generated_world(root, dirname)
 		menu_file.entryconfigure(0, state='disabled')
+		menu_file.entryconfigure(2, state='normal', command=lambda: cursorPosInfo.frame._image.show())
 
 		def choose_biome_source_folder():
 			dir_name = filedialog.askdirectory(mustexist=True, title='Open reference world folder')
@@ -518,25 +507,18 @@ if __name__ == "__main__":
 	menubar.add_cascade(menu=menu_file, label='World')
 	menu_file.add_command(label='Open...', command=choose_world_folder)
 	menu_file.add_command(label='Open biome reference...', state='disabled')
-	menubar.add_cascade(menu=menu_edit, label='Edit')
-	visual_style = StringVar(value=1)
-	menu_style = Menu(menu_edit)
-	menu_edit.add_cascade(menu=menu_style, label='Quick Style')
-	menu_style.add_radiobutton(label='cubiomes', variable=visual_style, value=1)
-	menu_style.add_radiobutton(label='chunkbase', variable=visual_style, value=2)
+	menu_file.add_command(label='Save Image...', state='disabled')
+	#menubar.add_cascade(menu=menu_edit, label='Edit')
+	#visual_style = StringVar(value=1)
+	#menu_style = Menu(menu_edit)
+	#menu_edit.add_cascade(menu=menu_style, label='Quick Style')
+	#menu_style.add_radiobutton(label='cubiomes', variable=visual_style, value=1)
+	#menu_style.add_radiobutton(label='chunkbase', variable=visual_style, value=2)
 	#print("Max depth:", add_item(option, 0))
 	win['menu'] = menubar
 	save_image = None
 
 	
-	
-	
-
-	
-	bedrock_path = pe_backup_path("dw-L+pZ+uQI=")
-	menu_file.add_command(label='Save Image...', command=save_image, state='normal' if save_image else 'disabled')
 	root.title("Long-Term World Analysis MC")
-	#save_image() if save_image else None
 		
 	root.mainloop()
-	#print(visual_style.get())

@@ -76,6 +76,10 @@ class WorldExplorer:
 		root_tag = self._world.level_wrapper.root_tag
 		return int(root_tag.get("RandomSeed"))
 
+	def get_world_name(self):
+		root_tag = self._world.level_wrapper.root_tag
+		return root_tag.get("LevelName")
+
 	def get_biome_palette(self):
 		return self._world.biome_palette
 
@@ -200,7 +204,7 @@ class WorldExplorer:
 			bits_per_value = 8
 		elif 9 <= bits_per_value <= 15:
 			bits_per_value = 16
-		header = bytes([bits_per_value << 1])
+		header = bytes([(bits_per_value << 1) + 1])
 
 		values_per_word = 32 // bits_per_value
 		word_count = -(-4096 // values_per_word)
@@ -390,8 +394,6 @@ class WorldExplorer:
 							my_biomes[cy] = cave_subchunk
 							made_changes = True
 					else:
-						made_changes = True
-						continue
 						mask = ((186 < cave_subchunk) & (cave_subchunk < 189)) | (cave_subchunk == 190)
 						if mask.any():
 							my_subchunk = my_biomes[cy]
