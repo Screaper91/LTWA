@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 from PIL import Image, ImageTk
 
 class AutoScrollbar(ttk.Scrollbar):
@@ -133,6 +133,12 @@ class Zoom_Advanced(ttk.Frame):
 			return imagetk
 		return None
 
+	def apply_zoom_transform(self, tagOrId: Union[str,int]):
+		'''Used to position and scale items created from coordinates relative to initial origin'''
+		xOff, yOff, *_ = self.canvas.coords(self.container)
+		self.canvas.scale(tagOrId, 0, 0, self.imscale, self.imscale)
+		self.canvas.move(tagOrId, xOff, yOff)
+
 	def get_pos_on_image(self, x, y, gridspacing: Any = None, useRawPos = False):
 		bbox = self.canvas.bbox(self.container)
 		return ((x if useRawPos else self.canvas.canvasx(x, gridspacing)) - bbox[0] - 1) / self.imscale, ((y if useRawPos else self.canvas.canvasy(y, gridspacing)) - bbox[1] - 1) / self.imscale
@@ -144,6 +150,7 @@ class MultiImageZoom(Zoom_Advanced):
 
 	def add_scaleable_image(self, image: Image.Image, coords: Tuple[float, float] = (0, 0)):
 		rect_id = self.canvas.create_rectangle(coords[0], coords[1], coords[0] + image.width, coords[1] + image.height)
+		self.apply_zoom_transform(rect_id)
 		self._scaleable_images.append((rect_id, image))
 		self._update()
 		return rect_id
