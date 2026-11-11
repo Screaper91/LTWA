@@ -15,6 +15,8 @@ from biomes import Biome, cubiomes_palette
 
 Range = Tuple[int, int, int, int, int]
 
+COLORS = {'purple': (128, 0, 255, 255), 'yellow': (234, 192, 0, 255), 'red': (255, 0, 0, 255), 'dark_purple': (51, 0, 102, 255), 'green': (0, 255, 0, 255)}
+
 def create_range(start_block_x: int, start_block_z: int, width_x_meters: int, height_z_meters: int, target_depth_y: int, scale: int = 1) -> Range:
 	return start_block_x // scale, start_block_z // scale, width_x_meters // scale, height_z_meters // scale, target_depth_y if scale == 1 else target_depth_y // 4
 
@@ -80,7 +82,7 @@ def view_generated_biomes(root: Tk, path: str, include_underground=False):
 			print(i, "/", count)
 			i += 1
 		
-		palette, mode = get_palette(biome_palette, world.transparent, 255, *(255, 0, 0, 255))
+		palette, mode = get_palette(biome_palette, world.transparent, 255, *(COLORS['red']))
 		img.putpalette(palette, mode)
 		
 
@@ -166,7 +168,7 @@ class ImageCycler:
 		self._images = images
 		self._index = 0
 		self._rect_id = zoom.add_scaleable_image(images[0], coords)
-		zoom.canvas.bind("l", self.change_image)
+		zoom.canvas.bind_all("L", self.change_image)
 		#zoom.canvas.itemconfigure(zoom.container, state='hidden') # this hides the rectangle, find a way to hide the image instead
 
 	def change_image(self, *event):
@@ -250,22 +252,30 @@ def view_generated_world(root: Tk, path: str, dimension: str = "minecraft:overwo
 	rectangles, bounds = world.get_chunk_boxes(dimension)
 	min_x, min_z = bounds[0], bounds[1]
 
-	color = (128, 0, 255, 255)
-
 	img = Image.new('RGBA', (bounds[2]-min_x, bounds[3]-min_z))
-	draw = ImageDraw.Draw(img)
+	draw = ImageDraw.Draw(img, "RGBA")
 
 	# Cave biome prediction
 	#gen = BiomeGenerator("1.19")
 	#gen.apply(world.get_world_seed(), 0)
 
 	points = []
+	warning_points = []
 	for entry in rectangles:
 		if len(entry) == 2:
 			points.append((entry[0] - min_x, entry[1] - min_z))
+			raw_data = world._get_raw_chunk_data(entry[0], entry[1], dimension)
+			if b'-' in raw_data and b'+' not in raw_data:
+				warning_points.append((entry[0]-min_x, entry[1]-min_z))
 		else:
-			draw.rectangle((entry[0]-min_x, entry[1]-min_z, entry[2]-min_x+1, entry[3]-min_z+1), fill=color)
-	draw.point(points, color)
+			draw.rectangle((entry[0]-min_x, entry[1]-min_z, entry[2]-min_x, entry[3]-min_z), fill=COLORS['purple'])
+			for cx in range(entry[0], entry[2]+1):
+				for cz in range(entry[1], entry[3]+1):
+					raw_data = world._get_raw_chunk_data(cx, cz, dimension)
+					if b'-' in raw_data and b'+' not in raw_data:
+						warning_points.append((cx-min_x, cz-min_z))
+	draw.point(points, COLORS["purple"])
+	draw.point(warning_points, COLORS['yellow'])
 
 	coordFormat = CoordinateFormatter(True, minChunkPos=(min_x, min_z))
 	cursorPosInfo = CursorPositionInfo(Zoomed(root, img, False), coordFormat.format)
@@ -306,13 +316,13 @@ def view_generated_world(root: Tk, path: str, dimension: str = "minecraft:overwo
 				translate = lambda entry: (entry[0] - min_x, entry[1] - min_z)
 				fixed, good, too_old, bad = world.fix_deepslate_biomes(cave_world, (cx0, cz0, cx1, cz1))
 				if len(fixed) > 0:
-					draw.point([translate(entry) for entry in fixed], (0, 255, 0, 255))
+					draw.point([translate(entry) for entry in fixed], COLORS['green'])
 				if len(good) > 0:
-					draw.point([translate(entry) for entry in good], (0, 128, 0, 255))
+					draw.point([translate(entry) for entry in good], COLORS['dark_purple'])
 				if len(too_old):
-					draw.point([translate(x) for x in too_old], (234, 192, 0, 255))
+					draw.point([translate(x) for x in too_old], COLORS['yellow'])
 				if len(bad) > 0:
-					draw.point([translate(entry) for entry in bad], (128, 0, 0, 255))
+					draw.point([translate(entry) for entry in bad], COLORS['red'])
 				cursorPosInfo.frame._update()
 
 			root.after(100, operate)
