@@ -414,7 +414,8 @@ class WorldExplorer:
 						self._world.level_wrapper.put_raw_chunk_data(cx, cz, my_raw_data, DIMENSION)
 						fixed_chunks.append((cx, cz))
 				else:
-					try:
+					try: # Used for debugging the encoder for 3d biomes
+						pass
 						control_encoding = self._encode_height_3d_biomes(heightmap, my_biomes)
 						if control_encoding != my_raw_data[b'+']:
 							try:

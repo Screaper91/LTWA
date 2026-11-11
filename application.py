@@ -278,7 +278,8 @@ def view_generated_world(root: Tk, path: str, dimension: str = "minecraft:overwo
 	draw.point(warning_points, COLORS['yellow'])
 
 	coordFormat = CoordinateFormatter(True, minChunkPos=(min_x, min_z))
-	cursorPosInfo = CursorPositionInfo(Zoomed(root, img, False), coordFormat.format)
+	zoom = MultiImageZoom(root, img, False)
+	cursorPosInfo = CursorPositionInfo(zoom, coordFormat.format)
 
 	spawn_pos = world.get_world_spawn()
 	translated_spawn = (spawn_pos[0] - (min_x * 16)) / 16, (spawn_pos[1] - (min_z * 16)) / 16
@@ -298,6 +299,24 @@ def view_generated_world(root: Tk, path: str, dimension: str = "minecraft:overwo
 
 	def create_cave_fixer_callback(copy_source_path):
 		cave_world = WorldExplorer(copy_source_path)
+
+		rectangles, bounds = cave_world.get_chunk_boxes()
+		
+		img_layers = ImageLayers('P', (bounds[2]-bounds[0], bounds[3]-bounds[1]), 0)
+
+		draw0 = ImageDraw.Draw(img_layers[0])
+		img_layers[0].putpalette([0,0,0,0,150,190,255,127],"RGBA")
+
+		for entry in rectangles:
+			if len(entry) == 2:
+				draw0.point((entry[0]-bounds[0],entry[1]-bounds[1]),1)
+			else:
+				draw0.rectangle((entry[0]-bounds[0],entry[1]-bounds[1],entry[2]-bounds[0],entry[3]-bounds[1]),1)
+		img_layers[1].paste(img_layers[0])
+		img_layers[1].putpalette([127,36,0,127,0,0,0,0],"RGBA")
+		
+		img_cycler = ImageCycler(zoom, img_layers, (bounds[0]-min_x, bounds[1]-min_z))
+
 		def cave_fixer_callback(rectId, coords: Tuple[float, float, float, float]):
 			x0, y0, x1, y1 = coords
 			x0, y0 = cursorPosInfo.frame.get_pos_on_image(x0, y0, useRawPos=True)
@@ -332,7 +351,7 @@ def view_generated_world(root: Tk, path: str, dimension: str = "minecraft:overwo
 			marker.show_text()
 
 			return marker
-		return cave_fixer_callback
+		return img_cycler, cave_fixer_callback
 
 	# create_cave_fixer_callback(other_path)
 
@@ -508,8 +527,13 @@ if __name__ == "__main__":
 
 		def choose_biome_source_folder():
 			dir_name = filedialog.askdirectory(mustexist=True, title='Open reference world folder')
-			annotations = RectangleAnnotations(cursorPosInfo.frame, create_cave_fixer_callback(dir_name))
+
+			zoom: MultiImageZoom = cursorPosInfo.frame
+			layer_cycler, callback = create_cave_fixer_callback(dir_name)
+			annotations = RectangleAnnotations(zoom, callback)
+
 			menu_file.entryconfigure(1, state='disabled')
+			menu_file.add_command(label='Change reference overlay', command=layer_cycler.change_image)
 
 		menu_file.entryconfigure(1, command=choose_biome_source_folder, state='normal')
 
