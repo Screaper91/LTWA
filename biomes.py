@@ -93,6 +93,10 @@ class Biome(Enum):
 	DEEP_DARK = auto()
 	MANGROVE_SWAMP = auto()
 	CHERRY_GROVE = auto()
+	PALE_GARDEN = auto()
+	SULFUR_CAVES = auto()
+	DAPPLED_FOREST = auto()
+	ICE_CAVES = auto()
 
 	LEGACY_FROZEN_OCEAN = auto()
 
@@ -307,6 +311,10 @@ integer_ids_latest = integer_ids_v1_18.copy()
 integer_ids_latest[190] = Biome.DEEP_DARK
 integer_ids_latest[191] = Biome.MANGROVE_SWAMP
 integer_ids_latest[192] = Biome.CHERRY_GROVE
+integer_ids_latest[193] = Biome.PALE_GARDEN
+integer_ids_latest[194] = Biome.SULFUR_CAVES
+integer_ids_latest[195] = Biome.DAPPLED_FOREST
+integer_ids_latest[196] = Biome.ICE_CAVES
 
 cubiomes_enum = {
 	0: Biome.OCEAN,

@@ -11,8 +11,8 @@ from typing import *
 from numpy.typing import NDArray
 from biomes import Biome
 
-cave_biomes = {Biome.LUSH_CAVES, Biome.DRIPSTONE_CAVES, Biome.DEEP_DARK}
-cave_biome_ids = {187, 188, 190}
+cave_biomes = {Biome.LUSH_CAVES, Biome.DRIPSTONE_CAVES, Biome.DEEP_DARK, Biome.SULFUR_CAVES, Biome.ICE_CAVES}
+cave_biome_ids = {187, 188, 190, 194, 196}
 
 Dimension = Literal['minecraft:overworld','minecraft:the_nether','minecraft:the_end']
 ChunkBiomeStatus = Literal['DOES_NOT_EXIST','NO_DEEPSLATE_LAYER']
@@ -394,7 +394,8 @@ class WorldExplorer:
 							my_biomes[cy] = cave_subchunk
 							made_changes = True
 					else:
-						mask = ((186 < cave_subchunk) & (cave_subchunk < 189)) | (cave_subchunk == 190)
+						mask = np.logical_or.reduce([np.equal(biome_id, cave_subchunk) for biome_id in cave_biome_ids])
+						
 						if mask.any():
 							my_subchunk = my_biomes[cy]
 							if isinstance(my_subchunk, int):
