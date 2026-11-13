@@ -1,9 +1,2 @@
-amulet-core==1.9.13
-amulet-nbt==2.0.5
-numpy==1.17
-Pillow==9.1.1
-pip==23.1.2
-portalocker==2.4.0
-PyMCTranslate==1.2.10
-pywin32==304
-setuptools==57.4.0
+amulet-core~=1.9.13
+Pillow~=9.1.1

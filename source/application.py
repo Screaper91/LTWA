@@ -520,7 +520,6 @@ if __name__ == "__main__":
 
 	def choose_world_folder():
 		dirname = filedialog.askdirectory(mustexist=True, title='Open world folder')
-		print(dirname)
 		cursorPosInfo, spawn_marker, create_cave_fixer_callback = view_generated_world(root, dirname)
 		menu_file.entryconfigure(0, state='disabled')
 		menu_layers.entryconfigure(0, state='normal', command=lambda: cursorPosInfo.frame._image.show())

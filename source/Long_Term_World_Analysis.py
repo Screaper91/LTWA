@@ -332,24 +332,6 @@ class WorldExplorer:
 		else:
 			return concatenate(all_xs, axis=0, dtype=ubyte, casting='unsafe'), rect_layers
 
-#		return layers[0]
-
-	def get_chunk_biomes_status(self, cx: int, cz: int, dimension: Dimension = 'minecraft:overworld') -> ChunkBiomeStatus:
-		if not self._world.has_chunk(cx, cz, dimension):
-			return 'DOES_NOT_EXIST'
-
-		raw_data = self._get_raw_chunk_data(cx, cz, dimension)
-		if b'+' not in raw_data:
-			# Deepslate not present at chunk not yet upgraded
-			return 'NO_DEEPSLATE_LAYER'
-		saved_biomes = self._decode_raw_3d_biomes(raw_data[b'+'],-4 if dimension == 'minecraft:overworld' else 0)
-		for cy in range(-4, 0):
-			if isinstance(saved_biomes[cy], int):
-				if saved_biomes[cy] in cave_biome_ids:
-					return 'HAS_CAVE_BIOME'
-			elif np.any(np.isin(cave_biome_ids, saved_biomes[cy])):
-				return 'HAS_CAVE_BIOME'
-		return 'HAS_NO_CAVE_BIOMES'
 
 	def fix_deepslate_biomes(self, generated_caves: 'WorldExplorer', selection_rect):
 		DIMENSION = "minecraft:overworld"
@@ -365,9 +347,6 @@ class WorldExplorer:
 
 		for cx in range(selection_rect[0], selection_rect[2] + 1):
 			for cz in range(selection_rect[1], selection_rect[3] + 1):
-				if cx == 16 and cz == -7:
-					pass
-
 				if not self._world.has_chunk(cx, cz, DIMENSION):
 					continue
 				if not generated_caves._world.has_chunk(cx, cz, DIMENSION):
@@ -414,27 +393,6 @@ class WorldExplorer:
 						self._world.level_wrapper.put_raw_chunk_data(cx, cz, my_raw_data, DIMENSION)
 						fixed_chunks.append((cx, cz))
 				else:
-					try: # Used for debugging the encoder for 3d biomes
-						pass
-						control_encoding = self._encode_height_3d_biomes(heightmap, my_biomes)
-						if control_encoding != my_raw_data[b'+']:
-							try:
-								assert_decode_encode_3d_biomes(my_raw_data[b'+'][512:])
-								successful_reencodings += 1
-							except AssertionError as ae:
-								assertion_errors += 1
-								print('encoding an unmodified biome array does not match the original value')
-								print('AsssertionError:\t', ae)
-								if len(control_encoding) == len(my_raw_data[b'+']):
-									print('\t...there is however no difference in length of {} bytes'.format(len(control_encoding)))
-								else:
-									print('\tLengths: control={} original={}'.format(len(control_encoding), len(my_raw_data[b'+'])))
-								#print('\tHighest adjustment: {} bytes'.format(len(b'\xFF') * (25 - len(my_biomes.keys()))))
-								bad_chunks.append((cx, cz))
-						else:
-							successful_reencodings += 1
-					except Exception:
-						pass
 					good_chunks.append((cx, cz))
 
 		print("Operation Totals:\nDecoding Errors: {}\nEncoding Errors: {}\nFixed Chunks: {}\n".format(decoding_errors, encoding_errors, len(fixed_chunks)))
