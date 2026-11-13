@@ -516,14 +516,14 @@ if __name__ == "__main__":
 
 	menubar = Menu(win)
 	menu_file = Menu(menubar)
-	#menu_edit = Menu(menubar)
+	menu_layers = Menu(menubar)
 
 	def choose_world_folder():
 		dirname = filedialog.askdirectory(mustexist=True, title='Open world folder')
 		print(dirname)
 		cursorPosInfo, spawn_marker, create_cave_fixer_callback = view_generated_world(root, dirname)
 		menu_file.entryconfigure(0, state='disabled')
-		menu_file.entryconfigure(2, state='normal', command=lambda: cursorPosInfo.frame._image.show())
+		menu_layers.entryconfigure(0, state='normal', command=lambda: cursorPosInfo.frame._image.show())
 
 		def choose_biome_source_folder():
 			dir_name = filedialog.askdirectory(mustexist=True, title='Open reference world folder')
@@ -533,7 +533,7 @@ if __name__ == "__main__":
 			annotations = RectangleAnnotations(zoom, callback)
 
 			menu_file.entryconfigure(1, state='disabled')
-			menu_file.add_command(label='Change reference overlay', command=layer_cycler.change_image)
+			menu_layers.entryconfigure(1, state='normal', command=layer_cycler.change_image)
 
 		menu_file.entryconfigure(1, command=choose_biome_source_folder, state='normal')
 
@@ -541,7 +541,9 @@ if __name__ == "__main__":
 	menubar.add_cascade(menu=menu_file, label='World')
 	menu_file.add_command(label='Open...', command=choose_world_folder)
 	menu_file.add_command(label='Open biome reference...', state='disabled')
-	menu_file.add_command(label='Save Image...', state='disabled')
+	menubar.add_cascade(menu=menu_layers, label='Layers')
+	menu_layers.add_command(label='Save Image...', state='disabled')
+	menu_layers.add_command(label='Change reference overlay', state='disabled')
 	#menubar.add_cascade(menu=menu_edit, label='Edit')
 	#visual_style = StringVar(value=1)
 	#menu_style = Menu(menu_edit)
